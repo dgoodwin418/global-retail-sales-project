@@ -1,0 +1,139 @@
+---
+title: "Data Preparation for Global Retail Sales Dashboard"
+author: "Derrick Goodwin"
+date: "`r format(Sys.Date(), '%B %d, %Y')`"
+output:
+  html_document:
+    toc: true
+    toc_float: true
+    number_sections: true
+    theme: cerulean
+    df_print: paged
+---
+
+This document outlines the data preparation steps used to generate the clean dataset for the *Global Sales Overview* Tableau dashboard.  
+It covers the full workflow: data loading, cleaning, transformation, quality assurance, and export.
+
+
+knitr::opts_chunk$set(
+echo = TRUE,
+message = FALSE,
+warning = FALSE
+)
+
+# Install (first time only) then load
+
+# install.packages(c("tidyverse", "janitor", "lubridate", "skimr"))
+
+library(tidyverse)
+library(janitor)
+library(lubridate)
+library(skimr)
+
+# Helper: winsorize for light outlier control (optional)
+
+winsor <- function(x, probs = c(0.01, 0.99)) {
+q <- quantile(x, probs = probs, na.rm = TRUE)
+pmin(pmax(x, q[1]), q[2])
+}
+
+# Adjust path if needed; assumes file is in working directory
+
+raw <- read_csv("global_retail_sales.csv") %>% clean_names()
+
+glimpse(raw)
+head(raw, 6)
+
+# Basic summaries
+
+summary(raw)
+
+# Simple NA check by column
+
+colSums(is.na(raw))
+
+clean <- raw %>%
+mutate(
+order_date = as.Date(order_date),
+year = year(order_date),
+month = month(order_date, label = TRUE, abbr = TRUE),
+quarter = paste0("Q", quarter(order_date))
+) %>%
+
+# Remove impossible/invalid values (defensive check)
+
+filter(
+!is.na(order_date),
+year %in% c(2023, 2024),
+quantity > 0,
+unit_price > 0,
+revenue >= 0,
+profit >= 0,
+discount >= 0, discount <= 0.30
+) %>%
+distinct()
+
+# Light winsorization for realism on revenue/profit
+
+clean <- clean %>%
+mutate(
+revenue_w = winsor(revenue),
+profit_w  = winsor(profit),
+aov = revenue_w / quantity,
+profit_margin = if_else(revenue_w > 0, profit_w / revenue_w, NA_real_)
+)
+
+glimpse(clean)
+head(clean, 6)
+
+# Summary after cleaning
+
+summary(clean)
+
+# Skim summary (nice compact profile)
+
+skim(clean)
+
+# Quick KPI check
+
+kpi <- clean %>%
+summarise(
+total_revenue = sum(revenue_w),
+total_profit  = sum(profit_w),
+avg_order_value = mean(aov, na.rm = TRUE),
+profit_margin_pct = mean(profit_margin, na.rm = TRUE)
+)
+kpi
+
+library(ggplot2)
+
+# Revenue vs Profit sanity scatter
+
+ggplot(clean, aes(x = revenue_w, y = profit_w)) +
+geom_point(alpha = 0.3) +
+labs(title = "Revenue vs Profit (Winsorized)",
+x = "Revenue (winsorized)", y = "Profit (winsorized)")
+
+# Profit margin by region
+
+ggplot(clean, aes(x = region, y = profit_margin)) +
+geom_boxplot() +
+labs(title = "Profit Margin by Region",
+x = "Region", y = "Profit Margin")
+
+write_csv(
+clean %>%
+select(
+order_id, order_date, year, month, quarter,
+customer_id, region, country,
+category, subcategory,
+quantity, unit_price, discount,
+revenue = revenue_w, profit = profit_w, aov, profit_margin,
+payment_method, shipping_mode
+),
+"global_retail_sales_clean.csv"
+)
+
+cat("✅ Exported: global_retail_sales_clean.csv\n")
+
+sessionInfo()
