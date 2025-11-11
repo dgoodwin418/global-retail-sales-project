@@ -1,4 +1,4 @@
-![Global Sales Overview Dashboard]("Global Sales Overview 2023-2024.png")
+![Global Sales Overview Dashboard](Global%20Sales%20Overview%202023-2024.png)
 
 # 🧭 Global Sales Overview Dashboard (R + Tableau)
 
@@ -98,6 +98,7 @@ Data Analyst | R + Tableau | Business Intelligence
 📧 [LinkedIn](https://www.linkedin.com/in/derrick-goodwin)
 
 <sub>**Keywords:** Tableau, R, Data Analytics, Data Visualization, Dashboard Design, Portfolio Project, Business Intelligence</sub>
+
 
 
 
