@@ -1,3 +1,5 @@
+![Global Sales Overview Dashboard](Global_Sales_Overview.png)
+
 # 🧭 Global Sales Overview Dashboard (R + Tableau)
 
 ### 📊 Overview
@@ -96,3 +98,4 @@ Data Analyst | R + Tableau | Business Intelligence
 📧 [LinkedIn](https://www.linkedin.com/in/derrick-goodwin)
 
 <sub>**Keywords:** Tableau, R, Data Analytics, Data Visualization, Dashboard Design, Portfolio Project, Business Intelligence</sub>
+
